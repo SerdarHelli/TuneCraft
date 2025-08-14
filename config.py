@@ -33,6 +33,7 @@ TRAINING_CONFIG = {
     "warmup_steps": 50,
     "beta": 0.0,  # No KL penalty (recommended default)
     "scale_rewards": True,
+    "dispatch_batches": False,  # Required for IterableDataset support
 }
 # LoRA configuration
 LORA_CONFIG = {
@@ -74,11 +75,11 @@ IMAGE_CONFIG = {
     "force_rgb": True,          # Convert all images to RGB
 }
 
-# Iterable dataset settings (following HuggingFace best practices)
-ITERABLE_DATASET_CONFIG = {
-    "use_iterable_datasets": True,  # Use IterableDataset for large datasets
-    "streaming": True,              # Stream data without caching to disk
-    "on_demand_loading": True,      # Load images only when needed
+# Dataset settings (Using IterableDataset with workaround)
+DATASET_CONFIG = {
+    "use_iterable_datasets": True,   # Using IterableDataset with dispatch_batches=False workaround
+    "streaming": True,               # Stream data without caching to disk
+    "on_demand_loading": True,       # Load images only when needed
 }
 
 # Dataset processing

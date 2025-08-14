@@ -12,6 +12,7 @@ print("Torch:", torch.__version__)
 print("CUDA available:", torch.cuda.is_available())
 
 # Create iterable datasets (following HuggingFace best practices)
+# Note: Using IterableDataset with dispatch_batches=False workaround for GRPOTrainer
 print("Creating iterable datasets...")
 
 from create_datasets import create_iterable_dataset
@@ -23,6 +24,7 @@ ds_test = create_iterable_dataset(TEST_JSON)
 
 print("✅ Iterable datasets created successfully")
 print("💾 Images will be loaded on-demand during training")
+print("🔧 Using dispatch_batches=False workaround for IterableDataset support")
 
 # Test dataset by taking a few samples
 print("Testing dataset...")
@@ -194,6 +196,7 @@ training_args = GRPOConfig(
     warmup_steps=TRAINING_CONFIG.get("warmup_steps", 50),
     beta=TRAINING_CONFIG.get("beta", 0.0),
     scale_rewards=TRAINING_CONFIG.get("scale_rewards", True),
+    dispatch_batches=TRAINING_CONFIG.get("dispatch_batches", False),  # Required for IterableDataset support
 )
 print("Creating GRPO trainer...")
 
