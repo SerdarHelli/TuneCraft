@@ -11,14 +11,15 @@ TEST_JSON = "/home/QA_json/test_vqa_data.json"
 MODEL_ID = "google/medgemma-4b-it"  # Medical vision-language model
 USE_ONLY_FIRST_IMAGE = False  # Set to True to use only the first image per sample
 
-# Training configuration
+# Training configuration - Optimized for A100 80GB
 TRAINING_CONFIG = {
     "output_dir": "medgemma4b_it_grpo_reasoning",
-    "per_device_train_batch_size": 1,
-    "gradient_accumulation_steps": 8,
+    "per_device_train_batch_size": 2,  # Increased for A100 80GB
+    "gradient_accumulation_steps": 4,  # Reduced since we increased batch size
     "learning_rate": 5e-6,
     "num_train_epochs": 1,
     "num_generations": 4,  # Number of completions generated per prompt
+    "generation_batch_size": 4,  # Must be divisible by num_generations (4)
     "max_prompt_length": None,  # Don't truncate prompts (important for VLM)
     "max_completion_length": 128,
     "bf16": True,
@@ -31,8 +32,6 @@ TRAINING_CONFIG = {
     "warmup_steps": 50,
     "beta": 0.0,  # No KL penalty
     "scale_rewards": True,
-    # Generation control - use steps_per_generation instead of generation_batch_size
-    "steps_per_generation": 1,  # Generate after every step
 }
 
 # LoRA configuration
