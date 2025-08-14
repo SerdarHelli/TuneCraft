@@ -63,7 +63,7 @@ def create_iterable_dataset_generator(json_path, images_base_path="."):
                 if raw_path.startswith('../'):
                     # Convert ../path to absolute path from project root
                     # ../data/images/file.png -> data/images/file.png
-                    clean_path = raw_path.replace('../', '/home')
+                    clean_path = raw_path.replace('../', '/home/')
                     image_path = os.path.normpath(clean_path)
                 else:
                     image_path = os.path.join(images_base_path, raw_path)
@@ -77,7 +77,7 @@ def create_iterable_dataset_generator(json_path, images_base_path="."):
                 
                 # Handle relative paths that start with ../
                 if raw_path.startswith('../'):
-                    clean_path = raw_path.replace('../', '')
+                    clean_path = raw_path.replace('../', '/home/')
                     image_path = os.path.normpath(clean_path)
                 else:
                     image_path = raw_path
