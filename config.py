@@ -14,13 +14,12 @@ USE_ONLY_FIRST_IMAGE = False  # Set to True to use only the first image per samp
 # Training configuration - Optimized for A100 80GB
 TRAINING_CONFIG = {
     "output_dir": "medgemma4b_it_grpo_reasoning",
-    "per_device_train_batch_size": 2,  # Increased for A100 80GB
-    "gradient_accumulation_steps": 4,  # Reduced since we increased batch size
+    "per_device_train_batch_size": 2,  # Batch size for A100 80GB
+    "gradient_accumulation_steps": 4,  # Effective batch size = 2 * 4 = 8
     "learning_rate": 5e-6,
     "num_train_epochs": 1,
     "num_generations": 4,  # Number of completions generated per prompt
-    "generation_batch_size": 4,  # Must be divisible by num_generations
-    "steps_per_generation": 1,  # Generate every 1 step (instead of generation_batch_size)
+    "generation_batch_size": 4,  # Must be divisible by num_generations (using this instead of steps_per_generation)
     "max_prompt_length": None,  # Don't truncate prompts (important for VLM)
     "max_completion_length": 128,
     "bf16": True,
@@ -28,13 +27,12 @@ TRAINING_CONFIG = {
     "logging_steps": 10,
     "save_steps": 500,
     "report_to": "none",
-    "dataloader_num_workers": 0,  # Use 0 for iterable datasets to avoid multiprocessing issues
+    "dataloader_num_workers": 0,  # Use 0 for iterable datasets
     "gradient_checkpointing": True,
     "warmup_steps": 50,
-    "beta": 0.0,  # No KL penalty
+    "beta": 0.0,  # No KL penalty (recommended default)
     "scale_rewards": True,
 }
-
 # LoRA configuration
 LORA_CONFIG = {
     "r": 16,
