@@ -166,8 +166,25 @@ print("Model and processor loaded successfully")
 # --- GRPO Training Configuration ---
 print("Setting up GRPO training configuration...")
 
-training_args = GRPOConfig(**TRAINING_CONFIG)
-
+training_args = GRPOConfig(
+    learning_rate=5e-6,
+    adam_beta1=0.9,
+    adam_beta2=0.99,
+    weight_decay=0.1,
+    warmup_ratio=0.1,
+    lr_scheduler_type="cosine",
+    optim="paged_adamw_8bit",
+    logging_steps=1,
+    per_device_train_batch_size=1,
+    gradient_accumulation_steps=1,  # Increase to 4 for smoother training
+    num_generations=6,  # Decrease if out of memory
+    # num_train_epochs = 1, # Set to 1 for a full training run
+    max_steps=250,
+    save_steps=250,
+    max_grad_norm=0.1,
+    report_to="none",  # Can use Weights & Biases
+    output_dir="outputs",
+)
 print("Creating GRPO trainer...")
 
 # Create trainer
