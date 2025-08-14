@@ -1,5 +1,5 @@
 """
-Configuration file for MedGemma GRPO training
+Configuration file for MedGemma SFT training
 """
 
 # Dataset paths - Windows paths
@@ -49,43 +49,8 @@ QUANTIZATION_CONFIG = {
     "bnb_4bit_compute_dtype": "bfloat16"
 }
 
-# Reward function weights
-REWARD_WEIGHTS = {
-    "correct_answer": 1.0,      # Weight for correct letter
-    "explanation_quality": 0.6,  # Weight for explanation F1 score
-    "evidence_usage": 0.2,       # Weight for using report evidence
-    "format_bonus": 0.1,         # Bonus for correct format
-    "conciseness_bonus": 0.1,    # Bonus for concise responses
-}
-
 # Response format tokens
 REASONING_START = "<start_working_out>"
 REASONING_END = "<end_working_out>"
 SOLUTION_START = "<SOLUTION>"
 SOLUTION_END = "</SOLUTION>"
-
-# Image processing settings
-IMAGE_CONFIG = {
-    "target_size": (512, 512),  # Resize images to this size
-    "convert_16bit": True,      # Convert 16-bit images to 8-bit
-    "normalize_range": True,    # Normalize pixel values to 0-255
-    "force_rgb": True,          # Convert all images to RGB
-}
-
-
-# PyTorch DataLoader configuration
-DATALOADER_CONFIG = {
-    "batch_size": 2,           # Same as per_device_train_batch_size
-    "num_workers": 0,          # Number of worker processes (0 = main process only)
-    "pin_memory": True,        # Pin memory for faster GPU transfer
-    "persistent_workers": False, # Keep workers alive between epochs
-    "drop_last": True,         # Drop incomplete batches
-    "shuffle": True,           # Shuffle training data
-}
-
-# Dataset processing
-DATASET_SAVE_NAMES = {
-    "train": "radiology_mcq_train",
-    "val": "radiology_mcq_val", 
-    "test": "radiology_mcq_test"
-}

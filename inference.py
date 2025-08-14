@@ -1,192 +1,198 @@
-#!/usr/bin/env python3
-"""
-Inference script for the trained MedGemma GRPO model
-"""
-
-import os
 import torch
-from transformers import AutoProcessor, AutoModelForVision2Seq
+from unsloth import FastVisionModel
+from transformers import TextStreamer
 from PIL import Image
-import numpy as np
-import argparse
+import json
 from config import *
 
-def load_trained_model(model_path: str):
-    """Load the trained model and processor"""
-    print(f"Loading trained model from: {model_path}")
+def load_trained_model(model_path):
+    """Load the fine-tuned model"""
+    print(f"Loading trained model from {model_path}")
     
-    processor = AutoProcessor.from_pretrained(model_path, trust_remote_code=True)
-    model = AutoModelForVision2Seq.from_pretrained(
-        model_path,
-        torch_dtype=torch.bfloat16,
-        device_map="auto",
-        trust_remote_code=True
+    model, tokenizer = FastVisionModel.from_pretrained(
+        model_name=model_path,
+        max_seq_length=TRAINING_CONFIG["max_seq_length"],
+        dtype=None,
+        load_in_4bit=True,
     )
     
-    return model, processor
+    # Enable native 2x faster inference
+    FastVisionModel.for_inference(model)
+    
+    return model, tokenizer
 
-def load_and_preprocess_medical_image(image_path: str, target_size: tuple = (512, 512)) -> Image.Image:
-    """Load and preprocess medical images (same as in dataset_pre.py)"""
-    try:
-        if not os.path.exists(image_path):
-            print(f"Warning: Image not found at {image_path}")
-            return Image.new("RGB", target_size, color=(128, 128, 128))
-        
-        # Load image
-        img = Image.open(image_path)
-        
-        # Handle different image modes
-        if img.mode in ['I', 'I;16', 'F']:  # 16-bit or float images
-            print(f"Converting 16-bit image: {image_path}")
-            # Convert to numpy for processing
-            img_array = np.array(img, dtype=np.float32)
-            
-            # Normalize to 0-255 range
-            if img_array.max() > 255:
-                # For 16-bit images, normalize from full range
-                img_array = (img_array - img_array.min()) / (img_array.max() - img_array.min()) * 255
-            
-            # Convert to 8-bit
-            img_array = np.clip(img_array, 0, 255).astype(np.uint8)
-            
-            # Create PIL image from array
-            img = Image.fromarray(img_array, mode='L')
-        
-        # Convert to RGB (required for vision models)
-        if img.mode != 'RGB':
-            if img.mode == 'L':  # Grayscale
-                # Convert grayscale to RGB by duplicating channels
-                img = img.convert('RGB')
-            elif img.mode in ['RGBA', 'LA']:  # With alpha channel
-                # Create white background and paste image
-                background = Image.new('RGB', img.size, (255, 255, 255))
-                if img.mode == 'RGBA':
-                    background.paste(img, mask=img.split()[-1])  # Use alpha as mask
-                else:
-                    background.paste(img.convert('RGB'))
-                img = background
-            else:
-                img = img.convert('RGB')
-        
-        # Resize image to target size
-        if img.size != target_size:
-            # Use LANCZOS for high-quality downsampling
-            img = img.resize(target_size, Image.Resampling.LANCZOS)
-        
-        return img
-        
-    except Exception as e:
-        print(f"Error processing image {image_path}: {e}")
-        # Return placeholder image
-        return Image.new("RGB", target_size, color=(128, 128, 128))
-
-def generate_response(model, processor, prompt: str, image_path: str, max_length: int = 128):
-    """Generate a response for the given prompt and image"""
+def format_question_prompt(question, options, context_info=None):
+    """Format a question for inference"""
+    opts = "\n".join([f"{chr(65+i)}. {opt}" for i, opt in enumerate(options)])
     
-    # Load and process image using the same preprocessing as training
-    image = load_and_preprocess_medical_image(image_path, target_size=IMAGE_CONFIG["target_size"])
-    
-    # Prepare inputs
-    inputs = processor(
-        text=prompt,
-        images=image,
-        return_tensors="pt",
-        padding=True
-    )
-    
-    # Move to device
-    inputs = {k: v.to(model.device) for k, v in inputs.items()}
-    
-    # Generate response
-    with torch.no_grad():
-        outputs = model.generate(
-            **inputs,
-            max_new_tokens=max_length,
-            do_sample=True,
-            temperature=0.7,
-            top_p=0.9,
-            pad_token_id=processor.tokenizer.eos_token_id
-        )
-    
-    # Decode response
-    response = processor.tokenizer.decode(outputs[0], skip_special_tokens=True)
-    
-    # Extract only the generated part (remove the prompt)
-    if prompt in response:
-        response = response.split(prompt)[-1].strip()
-    
-    return response
-
-def create_sample_prompt(question: str, options: list, context: str = ""):
-    """Create a prompt in the expected format"""
-    opts = "\n".join(options)
+    ctx = []
+    if context_info:
+        if context_info.get("Indication"): 
+            ctx.append(f"Indication: {context_info['Indication']}")
+        if context_info.get("Comparison"): 
+            ctx.append(f"Comparison: {context_info['Comparison']}")
+        if context_info.get("Findings"): 
+            ctx.append(f"Findings: {context_info['Findings']}")
+        if context_info.get("Impression"): 
+            ctx.append(f"Impression: {context_info['Impression']}")
     
     prompt = (
         "You are an expert radiologist. Use the chest X-ray image(s) and report context.\n"
         "Respond in this format:\n"
         f"  {REASONING_START}...{REASONING_END}{SOLUTION_START}LETTER - main answer{SOLUTION_END}\n\n"
-        f"Question:\n{question}\n\nOptions:\n{opts}\n\nReport Context:\n{context or 'N/A'}"
+        f"Question:\n{question}\n\nOptions:\n{opts}\n\nReport Context:\n" +
+        ("\n".join(ctx) if ctx else "N/A")
     )
     
     return prompt
 
-def main():
-    parser = argparse.ArgumentParser(description="Run inference with trained MedGemma GRPO model")
-    parser.add_argument("--model_path", type=str, default=TRAINING_CONFIG["output_dir"],
-                       help="Path to the trained model")
-    parser.add_argument("--image_path", type=str, required=True,
-                       help="Path to the chest X-ray image")
-    parser.add_argument("--question", type=str, required=True,
-                       help="Medical question to ask")
-    parser.add_argument("--options", type=str, nargs="+", required=True,
-                       help="Multiple choice options (e.g., 'A. Normal' 'B. Pneumonia')")
-    parser.add_argument("--context", type=str, default="",
-                       help="Additional clinical context")
-    parser.add_argument("--max_length", type=int, default=128,
-                       help="Maximum generation length")
+def run_inference(model, tokenizer, image_path, question, options, context_info=None):
+    """Run inference on a single example"""
     
-    args = parser.parse_args()
+    # Load and prepare image
+    image = Image.open(image_path).convert('RGB')
     
-    # Load model
-    model, processor = load_trained_model(args.model_path)
+    # Format prompt
+    prompt = format_question_prompt(question, options, context_info)
     
-    # Create prompt
-    prompt = create_sample_prompt(args.question, args.options, args.context)
+    # Create conversation format
+    messages = [
+        {
+            "role": "user",
+            "content": f"<image>\n{prompt}"
+        }
+    ]
     
-    print("=== Input ===")
-    print(f"Image: {args.image_path}")
-    print(f"Question: {args.question}")
-    print(f"Options: {args.options}")
-    print(f"Context: {args.context}")
+    # Apply chat template
+    input_text = tokenizer.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=True
+    )
     
-    print("\n=== Prompt ===")
-    print(prompt)
+    # Tokenize
+    inputs = tokenizer(
+        input_text,
+        images=image,
+        return_tensors="pt"
+    ).to(model.device)
     
     # Generate response
-    print("\n=== Generating Response ===")
-    response = generate_response(model, processor, prompt, args.image_path, args.max_length)
+    text_streamer = TextStreamer(tokenizer, skip_prompt=True)
     
-    print("\n=== Response ===")
-    print(response)
+    print("=" * 50)
+    print("QUESTION:")
+    print(question)
+    print("\nOPTIONS:")
+    for i, opt in enumerate(options):
+        print(f"{chr(65+i)}. {opt}")
+    print("\nMODEL RESPONSE:")
+    print("-" * 30)
     
-    # Try to parse the response
-    print("\n=== Parsed Response ===")
+    with torch.no_grad():
+        outputs = model.generate(
+            **inputs,
+            streamer=text_streamer,
+            max_new_tokens=256,
+            temperature=0.7,
+            do_sample=True,
+            pad_token_id=tokenizer.eos_token_id
+        )
+    
+    print("=" * 50)
+
+def test_with_sample_data():
+    """Test with sample data from the validation set"""
+    
+    # Load trained model
+    model_path = TRAINING_CONFIG["output_dir"]  # Path to saved model
+    model, tokenizer = load_trained_model(model_path)
+    
+    # Load a sample from validation data
+    print("Loading sample from validation data...")
+    
     try:
-        if REASONING_START in response and REASONING_END in response:
-            reasoning = response.split(REASONING_START)[1].split(REASONING_END)[0].strip()
-            print(f"Reasoning: {reasoning}")
+        with open(VAL_JSON, 'r') as f:
+            val_data = json.load(f)
         
-        if SOLUTION_START in response and SOLUTION_END in response:
-            solution = response.split(SOLUTION_START)[1].split(SOLUTION_END)[0].strip()
-            print(f"Solution: {solution}")
+        # Get first sample
+        sample_id = list(val_data.keys())[0]
+        sample = val_data[sample_id]
+        
+        # Extract information
+        question = sample.get('question', '')
+        options = sample.get('options', [])
+        image_paths = sample.get('ImagePath', [])
+        
+        if not image_paths:
+            print("No image path found in sample")
+            return
             
-            # Extract letter
-            import re
-            letter_match = re.search(r'\b([ABCD])\b', solution)
-            if letter_match:
-                print(f"Predicted Answer: {letter_match.group(1)}")
+        image_path = image_paths[0]  # Use first image
+        
+        # Context information
+        context_info = {
+            'Indication': sample.get('Indication', ''),
+            'Findings': sample.get('Findings', ''),
+            'Impression': sample.get('Impression', ''),
+            'Comparison': sample.get('Comparison', '')
+        }
+        
+        print(f"Testing with sample ID: {sample_id}")
+        print(f"Image path: {image_path}")
+        
+        # Run inference
+        run_inference(model, tokenizer, image_path, question, options, context_info)
+        
+        # Show ground truth
+        print("\nGROUND TRUTH:")
+        print(f"Correct answer: {sample.get('correct_answer', 'N/A')}")
+        print(f"Explanation: {sample.get('correct_answer_explanation', 'N/A')}")
+        
     except Exception as e:
-        print(f"Could not parse response: {e}")
+        print(f"Error testing with sample data: {e}")
+        print("You can manually test by calling run_inference() with your own data")
+
+def interactive_test():
+    """Interactive testing mode"""
+    model_path = TRAINING_CONFIG["output_dir"]
+    model, tokenizer = load_trained_model(model_path)
+    
+    print("Interactive testing mode. Enter 'quit' to exit.")
+    
+    while True:
+        try:
+            image_path = input("\nEnter image path: ").strip()
+            if image_path.lower() == 'quit':
+                break
+                
+            question = input("Enter question: ").strip()
+            if question.lower() == 'quit':
+                break
+                
+            print("Enter options (one per line, empty line to finish):")
+            options = []
+            while True:
+                option = input(f"Option {chr(65+len(options))}: ").strip()
+                if not option:
+                    break
+                options.append(option)
+            
+            if not options:
+                print("No options provided, skipping...")
+                continue
+                
+            run_inference(model, tokenizer, image_path, question, options)
+            
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            print(f"Error: {e}")
 
 if __name__ == "__main__":
-    main()
+    import sys
+    
+    if len(sys.argv) > 1 and sys.argv[1] == "--interactive":
+        interactive_test()
+    else:
+        test_with_sample_data()

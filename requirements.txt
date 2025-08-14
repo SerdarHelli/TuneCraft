@@ -1,4 +1,4 @@
-# Core ML libraries
+# Core ML libraries (PyTorch 2.5.1+cu124 compatible)
 torch>=2.0.0
 transformers>=4.46.0
 datasets>=2.14.0

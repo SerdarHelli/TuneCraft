@@ -34,17 +34,24 @@ This will download the ReXVQA and ReXGradient datasets and organize them in the 
 ### 3. Start SFT Training
 
 ```bash
-python train_sft.py
+python train.py
 ```
 
-### 4. Test the Model
+### 4. Test Dataset (Optional)
+
+```bash
+# Test iterable dataset functionality
+python test_dataset.py
+```
+
+### 5. Test the Trained Model
 
 ```bash
 # Test with validation data
-python inference_sft.py
+python inference.py
 
 # Interactive testing
-python inference_sft.py --interactive
+python inference.py --interactive
 ```
 
 ## Configuration
@@ -67,75 +74,100 @@ Edit `config.py` to customize:
 - **More stable training** (no RL complexity)
 - **Better convergence** for supervised tasks
 
-## Expected Output Format
-
-The model is trained to respond in this format:
+### Model Output Format
+The model learns to generate responses in this format:
 ```
 <start_working_out>
-[Reasoning based on image and clinical context]
+[Medical reasoning based on image and context]
 <end_working_out>
+
 <SOLUTION>
-B - Pneumonia visible in right lower lobe
+A - [Detailed answer explanation]
 </SOLUTION>
 ```
 
-## Hardware Requirements
+## Memory Requirements
 
-### For 600k Image Dataset:
-- **GPU**: 16GB+ VRAM recommended (RTX 4090, A100, etc.)
-- **RAM**: 32GB+ system RAM (with lazy loading, only ~2-4GB used for image cache)
-- **Storage**: 100GB+ free space for model and datasets
+- **Minimum:** 16GB VRAM (RTX 4080, RTX 3090)
+- **Recommended:** 24GB VRAM (RTX 4090, RTX A6000)
+- **Optimal:** 48GB+ VRAM (RTX 6000 Ada, A100)
 
-### Memory Usage with Iterable Datasets:
-- **Without Iterable Datasets**: 600k × 512×512×3 = ~450GB RAM (impossible!)
-- **With Iterable Datasets**: Images loaded on-demand = ~minimal RAM usage ✅
+Adjust batch size in `config.py` based on your GPU memory.
 
-### Key Benefits:
-- **No Memory Limits**: Handle datasets of any size (600k, 1M+ images)
-- **No Disk Caching**: Datasets generated fresh each time (saves storage)
-- **Automatic Cleanup**: Images garbage collected after use
-- **Streaming**: Perfect for very large datasets that don't fit on disk
+## Dataset Structure
 
-## Troubleshooting
-
-### Common Issues
-
-1. **CUDA Out of Memory**:
-   - Reduce `per_device_train_batch_size` to 1
-   - Increase `gradient_accumulation_steps`
-   - Enable `gradient_checkpointing=True`
-
-2. **Image Loading Errors**:
-   - Check image paths in JSON files
-   - Ensure images are readable PIL format
-   - Code includes fallback to placeholder images
-
-3. **Dataset Format Errors**:
-   - Ensure JSON structure matches expected format
-   - Check that all required fields are present
-   - Verify image paths are absolute or relative to script location
-
-### Performance Tips
-
-1. **Use vLLM for faster generation** (if available):
-```python
-training_args = GRPOConfig(
-    # ... other args
-    use_vllm=True,
-    vllm_mode="colocate",
-)
+```
+data/
+├── QA_json/
+│   ├── train_vqa_data.json
+│   ├── valid_vqa_data.json
+│   └── test_vqa_data.json
+└── images/
+    └── [extracted medical images]
 ```
 
-2. **Adjust generation settings**:
-   - Reduce `num_generations` if memory constrained
-   - Increase `max_completion_length` for longer reasoning
+## Training Process
 
-## References
+1. **Data Loading:** Iterable datasets from JSON files (memory efficient)
+2. **Model Setup:** MedGemma-4B with Unsloth optimizations
+3. **SFT Training:** Supervised learning on formatted conversations
+4. **Model Saving:** Both PyTorch and GGUF formats
 
-- [GRPO Paper](https://arxiv.org/abs/2402.03300): DeepSeekMath: Pushing the Limits of Mathematical Reasoning
-- [TRL GRPO Documentation](https://huggingface.co/docs/trl/main/en/grpo_trainer)
-- [MedGemma Model](https://huggingface.co/google/medgemma-4b-it)
+## Key Features
+
+- **Iterable Datasets:** Images loaded on-demand, no memory limits
+- **Memory Efficient:** Handle datasets of any size (600k+ images)
+- **Fast Training:** 2x faster with Unsloth optimizations
+- **Consumer GPU Ready:** Works on RTX 4090, RTX 3090, etc.
+
+## Files
+
+### Training
+- `train.py` - Main SFT training script with iterable datasets
+- `config.py` - Configuration for SFT training
+- `requirements.txt` - Dependencies with Unsloth
+
+### Data Processing
+- `download_data.py` - Data download script
+
+### Inference
+- `inference.py` - Model inference script
+
+### Setup & Testing
+- `install_unsloth.py` - Dependency installation script
+- `setup_and_train.py` - Complete setup and training pipeline
+- `test_dataset.py` - Test iterable dataset functionality
+
+## Advantages of Unsloth SFT
+
+1. **Speed:** 2x faster training than standard methods
+2. **Memory:** More efficient memory usage
+3. **Compatibility:** Works with consumer GPUs
+4. **Stability:** More stable than RL-based training
+5. **Quality:** Better performance on supervised tasks
 
 ## License
 
-This code is provided for research purposes. Please check the licenses of the underlying models and datasets.
+This project is for research purposes. Please check the licenses of the underlying models and datasets.
+
+## Troubleshooting
+
+### CUDA Issues
+```bash
+# For CUDA 12.4 (your current setup)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+
+# For CUDA 12.1 (alternative)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+```
+
+### Memory Issues
+- Reduce `per_device_train_batch_size` in `config.py`
+- Increase `gradient_accumulation_steps` to maintain effective batch size
+- Enable `gradient_checkpointing` (already enabled by default)
+
+### Import Errors
+```bash
+# Run the installation script
+python install_unsloth.py
+```

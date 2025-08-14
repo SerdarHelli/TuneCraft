@@ -24,10 +24,18 @@ def main():
     
     print("Installing Unsloth for efficient fine-tuning...")
     
-    # Install PyTorch first (if needed)
-    print("\n1. Installing PyTorch with CUDA support...")
-    torch_cmd = "pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121"
-    run_command(torch_cmd)
+    # Check existing PyTorch version
+    print("\n1. Checking PyTorch installation...")
+    try:
+        import torch
+        print(f"✅ PyTorch {torch.__version__} already installed")
+        print(f"✅ CUDA available: {torch.cuda.is_available()}")
+        if torch.cuda.is_available():
+            print(f"✅ CUDA version: {torch.version.cuda}")
+    except ImportError:
+        print("Installing PyTorch with CUDA support...")
+        torch_cmd = "pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124"
+        run_command(torch_cmd)
     
     # Install Unsloth
     print("\n2. Installing Unsloth...")
@@ -74,7 +82,8 @@ def main():
         
         print("\n🎉 All dependencies installed successfully!")
         print("\nYou can now run:")
-        print("  python train_sft.py")
+        print("  python train.py")
+        print("  python test_dataset.py  # Test iterable datasets")
         
     except ImportError as e:
         print(f"❌ Import error: {e}")
