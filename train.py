@@ -109,7 +109,7 @@ def create_iterable_dataset_generator(json_path, images_base_path="."):
             ]
             
             yield {
-                "image": image_path,
+                "image": [image_path],
                 "conversations": conversation
             }
             
