@@ -2,37 +2,35 @@
 Configuration file for MedGemma GRPO training
 """
 
-# Dataset paths - UPDATE THESE TO YOUR ACTUAL PATHS
-TRAIN_JSON = "/home/QA_json/train_vqa_data.json"
-VAL_JSON = "/home/QA_json/valid_vqa_data.json"
-TEST_JSON = "/home/QA_json/test_vqa_data.json"
+# Dataset paths - Windows paths
+TRAIN_JSON = "data/QA_json/train_vqa_data.json"
+VAL_JSON = "data/QA_json/valid_vqa_data.json"
+TEST_JSON = "data/QA_json/test_vqa_data.json"
 
 # Model configuration
 MODEL_ID = "google/medgemma-4b-it"  # Medical vision-language model
 USE_ONLY_FIRST_IMAGE = False  # Set to True to use only the first image per sample
 
-# Training configuration - Optimized for A100 80GB
+# Training configuration - SFT with Unsloth
 TRAINING_CONFIG = {
-    "output_dir": "medgemma4b_it_grpo_reasoning",
-    "per_device_train_batch_size": 2,  # Batch size for A100 80GB
+    "output_dir": "medgemma4b_it_sft_reasoning",
+    "per_device_train_batch_size": 2,  # Batch size
     "gradient_accumulation_steps": 4,  # Effective batch size = 2 * 4 = 8
-    "learning_rate": 5e-6,
-    "num_train_epochs": 1,
-    "max_steps": 250,  # Maximum training steps
-    "num_generations": 4,  # Number of completions generated per prompt
-    "generation_batch_size": 4,  # Must be divisible by num_generations (using this instead of steps_per_generation)
-    "max_prompt_length": None,  # Don't truncate prompts (important for VLM)
-    "max_completion_length": 128,
+    "learning_rate": 2e-4,  # Higher learning rate for SFT
+    "num_train_epochs": 3,  # More epochs for SFT
+    "max_steps": -1,  # Use epochs instead of max_steps
+    "max_seq_length": 2048,  # Maximum sequence length
     "bf16": True,
     "remove_unused_columns": False,
     "logging_steps": 10,
     "save_steps": 500,
+    "save_total_limit": 3,
     "report_to": "none",
-    "dataloader_num_workers": 0,  # Use 0 for iterable datasets
+    "dataloader_num_workers": 0,
     "gradient_checkpointing": True,
     "warmup_steps": 50,
-    "beta": 0.0,  # No KL penalty (recommended default)
-    "scale_rewards": True,
+    "weight_decay": 0.01,
+    "lr_scheduler_type": "linear",
 }
 # LoRA configuration
 LORA_CONFIG = {

@@ -1,114 +1,71 @@
-# MedGemma GRPO Fine-tuning
+# MedGemma Fine-tuning with Unsloth SFT
 
-This repository contains code for fine-tuning Google's MedGemma-4B-IT model using Group Relative Policy Optimization (GRPO) for medical visual question answering tasks.
+This repository contains code for fine-tuning Google's MedGemma-4B model using Unsloth for efficient Supervised Fine-Tuning (SFT) on medical visual question answering tasks.
 
-## Overview
+## Features
 
-The training pipeline uses:
-- **Model**: Google MedGemma-4B-IT (Vision-Language Model)
-- **Method**: GRPO (Group Relative Policy Optimization) 
-- **Task**: Medical radiology multiple-choice questions with chest X-ray images
-- **Framework**: Hugging Face TRL (Transformer Reinforcement Learning)
+- **Ultra-fast training** with Unsloth (2x faster than standard fine-tuning)
+- **Memory-efficient** with 4-bit quantization and LoRA
+- **Vision-language support** for medical image analysis
+- **Optimized for consumer GPUs** (RTX 4090, RTX 3090, etc.)
+- **Medical image preprocessing** with automatic format conversion
 
-## Key Features
+## Quick Start
 
-- ✅ **Correct GRPO Implementation**: Uses latest TRL GRPO trainer with proper VLM support
-- ✅ **Prompt-Only Dataset Format**: Properly formatted for GRPO training
-- ✅ **Custom Reward Function**: Rewards correct answers, reasoning quality, and format
-- ✅ **Memory Efficient**: Uses 4-bit quantization and LoRA for efficient training
-- ✅ **VLM Support**: Handles images and text inputs correctly
-- ✅ **HuggingFace Iterable Datasets**: Uses recommended approach for large datasets (600k+ images)
-- ✅ **On-Demand Image Loading**: Images loaded only when needed during training
-- ✅ **16-bit Image Support**: Automatically converts 16-bit medical images to 8-bit RGB
-- ✅ **Memory Efficient**: No disk caching needed, generated fresh each time
+### 1. Install Dependencies
 
-## Installation
-
-1. Install dependencies:
 ```bash
+# Option 1: Use the install script
+python install_unsloth.py
+
+# Option 2: Manual installation
+pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
 pip install -r requirements.txt
 ```
 
-2. Update dataset paths in `config.py`:
-```python
-# Change these to your actual paths
-TRAIN_JSON = "/path/to/your/train_vqa_data.json"
-VAL_JSON   = "/path/to/your/valid_vqa_data.json"
-TEST_JSON  = "/path/to/your/test_vqa_data.json"
-```
+### 2. Download Data
 
-3. Optimize cache size for your system:
 ```bash
-python optimize_cache.py
+python download_data.py
 ```
-This will analyze your system and recommend optimal cache settings.
 
-4. Update the recommended settings in `config.py`
+This will download the ReXVQA and ReXGradient datasets and organize them in the `data/` directory.
 
-## Usage
+### 3. Start SFT Training
 
-### Quick Start
 ```bash
-python run_training.py
+python train_sft.py
 ```
 
-### Step by Step
+### 4. Test the Model
 
-1. **Test dataset creation**:
 ```bash
-python create_datasets.py
+# Test with validation data
+python inference_sft.py
+
+# Interactive testing
+python inference_sft.py --interactive
 ```
 
-2. **Run GRPO training**:
-```bash
-python train.py
-```
+## Configuration
 
-## Dataset Format
+Edit `config.py` to customize:
+- Dataset paths (now using Windows-compatible paths)
+- Model settings
+- Training hyperparameters
+- LoRA configuration
 
-The code expects JSON files with this structure:
-```json
-{
-  "sample_id": {
-    "question": "What is the primary finding?",
-    "options": ["A. Normal", "B. Pneumonia", "C. Fracture", "D. Tumor"],
-    "correct_answer": "B",
-    "correct_answer_explanation": "Consolidation visible in right lower lobe",
-    "ImagePath": ["/path/to/image.jpg"],
-    "Indication": "Chest pain",
-    "Findings": "Right lower lobe consolidation",
-    "Impression": "Pneumonia"
-  }
-}
-```
+## Key Changes from GRPO to SFT
 
-## GRPO Training Details
+### Training Approach
+- **GRPO (old):** Reinforcement learning with custom reward function
+- **SFT (new):** Supervised fine-tuning on question-answer pairs
 
-### Dataset Format
-- **Type**: Prompt-only (required for GRPO)
-- **Columns**: `prompt`, `image`, plus reward function columns
-- **Images**: Single PIL Image per sample
-
-### Reward Function
-The custom reward function evaluates:
-1. **Correct Answer** (1.0 points): Letter matches gold standard
-2. **Explanation Quality** (0.6 points): Token F1 with gold explanation  
-3. **Evidence Usage** (0.2 points): Uses words from radiology report
-4. **Format Compliance** (0.1 points): Follows required format
-5. **Conciseness** (0.1 points): Response ≤ 220 characters
-
-### Model Configuration
-- **Base Model**: google/medgemma-4b-it
-- **Quantization**: 4-bit with NF4
-- **LoRA**: r=16, α=32, dropout=0.05
-- **Target Modules**: q_proj, v_proj, k_proj, o_proj, gate_proj, up_proj, down_proj
-
-### Training Configuration
-- **Batch Size**: 1 per device, 8 gradient accumulation steps
-- **Learning Rate**: 5e-6
-- **Generations**: 4 per prompt
-- **Max Completion**: 128 tokens
-- **No KL Penalty**: β=0.0 (following recent best practices)
+### Performance Benefits
+- **2x faster training** with Unsloth optimizations
+- **Lower memory usage** (works on RTX 4090 24GB)
+- **More stable training** (no RL complexity)
+- **Better convergence** for supervised tasks
 
 ## Expected Output Format
 
