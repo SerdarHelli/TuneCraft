@@ -33,7 +33,6 @@ TRAINING_CONFIG = {
     "warmup_steps": 50,
     "beta": 0.0,  # No KL penalty (recommended default)
     "scale_rewards": True,
-    "dispatch_batches": False,  # Required for IterableDataset support
 }
 # LoRA configuration
 LORA_CONFIG = {

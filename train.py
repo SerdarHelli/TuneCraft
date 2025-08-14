@@ -196,10 +196,9 @@ training_args = GRPOConfig(
     warmup_steps=TRAINING_CONFIG.get("warmup_steps", 50),
     beta=TRAINING_CONFIG.get("beta", 0.0),
     scale_rewards=TRAINING_CONFIG.get("scale_rewards", True),
-    dispatch_batches=TRAINING_CONFIG.get("dispatch_batches", False),  # Required for IterableDataset support
 )
 print("Creating GRPO trainer...")
-
+training_args.steps_per_generation = None
 # Create trainer
 trainer = GRPOTrainer(
     model=model,
