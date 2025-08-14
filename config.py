@@ -3,9 +3,9 @@ Configuration file for MedGemma SFT training
 """
 
 # Dataset paths - Windows paths
-TRAIN_JSON = "data/QA_json/train_vqa_data.json"
-VAL_JSON = "data/QA_json/valid_vqa_data.json"
-TEST_JSON = "data/QA_json/test_vqa_data.json"
+TRAIN_JSON = "/home/QA_json/train_vqa_data.json"
+VAL_JSON = "/home/QA_json/valid_vqa_data.json"
+TEST_JSON = "/home/QA_json/test_vqa_data.json"
 
 # Model configuration
 MODEL_ID = "google/medgemma-4b-it"  # Medical vision-language model

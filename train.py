@@ -38,7 +38,7 @@ model = FastVisionModel.get_peft_model(
 
 print("Model loaded successfully with LoRA adapters")
 
-def create_iterable_dataset_generator(json_path, images_base_path="data/images"):
+def create_iterable_dataset_generator(json_path, images_base_path="."):
     """Create a generator for iterable dataset"""
     def generator():
         print(f"Loading dataset from {json_path}")
@@ -62,7 +62,9 @@ def create_iterable_dataset_generator(json_path, images_base_path="data/images")
                 # Handle relative paths that start with ../
                 if raw_path.startswith('../'):
                     # Convert ../path to absolute path from project root
-                    image_path = os.path.normpath(os.path.join(os.getcwd(), raw_path))
+                    # ../data/images/file.png -> data/images/file.png
+                    clean_path = raw_path.replace('../', '/home')
+                    image_path = os.path.normpath(clean_path)
                 else:
                     image_path = os.path.join(images_base_path, raw_path)
             elif 'ImagePath' in item and item['ImagePath']:
@@ -75,7 +77,8 @@ def create_iterable_dataset_generator(json_path, images_base_path="data/images")
                 
                 # Handle relative paths that start with ../
                 if raw_path.startswith('../'):
-                    image_path = os.path.normpath(os.path.join(os.getcwd(), raw_path))
+                    clean_path = raw_path.replace('../', '')
+                    image_path = os.path.normpath(clean_path)
                 else:
                     image_path = raw_path
             
