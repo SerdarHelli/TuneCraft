@@ -18,22 +18,21 @@ TRAINING_CONFIG = {
     "gradient_accumulation_steps": 8,
     "learning_rate": 5e-6,
     "num_train_epochs": 1,
-    "generation_batch_size": 4,
-    "num_generations": 4,
-    "max_prompt_length": None,  # Don't truncate prompts
+    "num_generations": 4,  # Number of completions generated per prompt
+    "max_prompt_length": None,  # Don't truncate prompts (important for VLM)
     "max_completion_length": 128,
     "bf16": True,
     "remove_unused_columns": False,
     "logging_steps": 10,
     "save_steps": 500,
-    "eval_steps": 500,
-    "evaluation_strategy": "steps",
     "report_to": "none",
     "dataloader_num_workers": 0,  # Use 0 for iterable datasets to avoid multiprocessing issues
     "gradient_checkpointing": True,
     "warmup_steps": 50,
     "beta": 0.0,  # No KL penalty
     "scale_rewards": True,
+    # Generation control - use steps_per_generation instead of generation_batch_size
+    "steps_per_generation": 1,  # Generate after every step
 }
 
 # LoRA configuration
