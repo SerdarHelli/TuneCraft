@@ -1,0 +1,92 @@
+"""
+Configuration file for MedGemma GRPO training
+"""
+
+# Dataset paths - UPDATE THESE TO YOUR ACTUAL PATHS
+TRAIN_JSON = "/home/QA_json/train_vqa_data.json"
+VAL_JSON = "/home/QA_json/valid_vqa_data.json"
+TEST_JSON = "/home/QA_json/test_vqa_data.json"
+
+# Model configuration
+MODEL_ID = "google/medgemma-4b-it"
+USE_ONLY_FIRST_IMAGE = False  # Set to True to use only the first image per sample
+
+# Training configuration
+TRAINING_CONFIG = {
+    "output_dir": "medgemma4b_it_grpo_reasoning",
+    "per_device_train_batch_size": 1,
+    "gradient_accumulation_steps": 8,
+    "learning_rate": 5e-6,
+    "num_train_epochs": 1,
+    "generation_batch_size": 4,
+    "num_generations": 4,
+    "max_prompt_length": None,  # Don't truncate prompts
+    "max_completion_length": 128,
+    "bf16": True,
+    "remove_unused_columns": False,
+    "logging_steps": 10,
+    "save_steps": 500,
+    "eval_steps": 500,
+    "evaluation_strategy": "steps",
+    "report_to": "none",
+    "dataloader_num_workers": 4,  # Use multiple workers for lazy loading
+    "gradient_checkpointing": True,
+    "warmup_steps": 50,
+    "beta": 0.0,  # No KL penalty
+    "scale_rewards": True,
+}
+
+# LoRA configuration
+LORA_CONFIG = {
+    "r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "target_modules": ["q_proj", "v_proj", "k_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+    "task_type": "CAUSAL_LM"
+}
+
+# Quantization configuration
+QUANTIZATION_CONFIG = {
+    "load_in_4bit": True,
+    "bnb_4bit_quant_type": "nf4",
+    "bnb_4bit_use_double_quant": True,
+    "bnb_4bit_compute_dtype": "bfloat16"
+}
+
+# Reward function weights
+REWARD_WEIGHTS = {
+    "correct_answer": 1.0,      # Weight for correct letter
+    "explanation_quality": 0.6,  # Weight for explanation F1 score
+    "evidence_usage": 0.2,       # Weight for using report evidence
+    "format_bonus": 0.1,         # Bonus for correct format
+    "conciseness_bonus": 0.1,    # Bonus for concise responses
+}
+
+# Response format tokens
+REASONING_START = "<start_working_out>"
+REASONING_END = "<end_working_out>"
+SOLUTION_START = "<SOLUTION>"
+SOLUTION_END = "</SOLUTION>"
+
+# Image processing settings
+IMAGE_CONFIG = {
+    "target_size": (512, 512),  # Resize images to this size
+    "convert_16bit": True,      # Convert 16-bit images to 8-bit
+    "normalize_range": True,    # Normalize pixel values to 0-255
+    "force_rgb": True,          # Convert all images to RGB
+}
+
+# Lazy loading settings for large datasets
+LAZY_LOADING_CONFIG = {
+    "cache_size": 1000,         # Number of images to keep in memory
+    "use_lazy_loading": True,   # Enable lazy loading for large datasets
+    "prefetch_factor": 2,       # Prefetch factor for DataLoader
+    "num_workers": 4,           # Number of worker processes for data loading
+}
+
+# Dataset processing
+DATASET_SAVE_NAMES = {
+    "train": "radiology_mcq_train",
+    "val": "radiology_mcq_val", 
+    "test": "radiology_mcq_test"
+}
