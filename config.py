@@ -18,6 +18,7 @@ TRAINING_CONFIG = {
     "gradient_accumulation_steps": 4,  # Effective batch size = 2 * 4 = 8
     "learning_rate": 5e-6,
     "num_train_epochs": 1,
+    "max_steps": 250,  # Maximum training steps
     "num_generations": 4,  # Number of completions generated per prompt
     "generation_batch_size": 4,  # Must be divisible by num_generations (using this instead of steps_per_generation)
     "max_prompt_length": None,  # Don't truncate prompts (important for VLM)

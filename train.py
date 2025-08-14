@@ -167,23 +167,33 @@ print("Model and processor loaded successfully")
 print("Setting up GRPO training configuration...")
 
 training_args = GRPOConfig(
-    learning_rate=5e-6,
+    learning_rate=TRAINING_CONFIG["learning_rate"],
     adam_beta1=0.9,
     adam_beta2=0.99,
     weight_decay=0.1,
     warmup_ratio=0.1,
     lr_scheduler_type="cosine",
     optim="paged_adamw_8bit",
-    logging_steps=1,
-    per_device_train_batch_size=1,
-    gradient_accumulation_steps=1,  # Increase to 4 for smoother training
-    num_generations=6,  # Decrease if out of memory
-    # num_train_epochs = 1, # Set to 1 for a full training run
-    max_steps=250,
-    save_steps=250,
+    logging_steps=TRAINING_CONFIG.get("logging_steps", 1),
+    per_device_train_batch_size=TRAINING_CONFIG["per_device_train_batch_size"],
+    gradient_accumulation_steps=TRAINING_CONFIG["gradient_accumulation_steps"],
+    num_generations=TRAINING_CONFIG["num_generations"],
+    num_train_epochs=TRAINING_CONFIG.get("num_train_epochs", 1),
+    generation_batch_size=TRAINING_CONFIG["generation_batch_size"],  # Use generation_batch_size instead of steps_per_generation
+    max_steps=TRAINING_CONFIG.get("max_steps", 250),
+    save_steps=TRAINING_CONFIG.get("save_steps", 250),
     max_grad_norm=0.1,
-    report_to="none",  # Can use Weights & Biases
-    output_dir="outputs",
+    report_to=TRAINING_CONFIG.get("report_to", "none"),
+    output_dir=TRAINING_CONFIG["output_dir"],
+    max_prompt_length=TRAINING_CONFIG.get("max_prompt_length"),
+    max_completion_length=TRAINING_CONFIG.get("max_completion_length", 128),
+    bf16=TRAINING_CONFIG.get("bf16", True),
+    remove_unused_columns=TRAINING_CONFIG.get("remove_unused_columns", False),
+    dataloader_num_workers=TRAINING_CONFIG.get("dataloader_num_workers", 0),
+    gradient_checkpointing=TRAINING_CONFIG.get("gradient_checkpointing", True),
+    warmup_steps=TRAINING_CONFIG.get("warmup_steps", 50),
+    beta=TRAINING_CONFIG.get("beta", 0.0),
+    scale_rewards=TRAINING_CONFIG.get("scale_rewards", True),
 )
 print("Creating GRPO trainer...")
 
@@ -193,7 +203,6 @@ trainer = GRPOTrainer(
     processing_class=processor,
     args=training_args,
     train_dataset=ds_train,
-    eval_dataset=ds_val,
     reward_funcs=[reasoning_reward],
 )
 
