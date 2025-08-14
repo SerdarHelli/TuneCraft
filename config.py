@@ -75,6 +75,16 @@ IMAGE_CONFIG = {
 }
 
 
+# PyTorch DataLoader configuration
+DATALOADER_CONFIG = {
+    "batch_size": 2,           # Same as per_device_train_batch_size
+    "num_workers": 0,          # Number of worker processes (0 = main process only)
+    "pin_memory": True,        # Pin memory for faster GPU transfer
+    "persistent_workers": False, # Keep workers alive between epochs
+    "drop_last": True,         # Drop incomplete batches
+    "shuffle": True,           # Shuffle training data
+}
+
 # Dataset processing
 DATASET_SAVE_NAMES = {
     "train": "radiology_mcq_train",
