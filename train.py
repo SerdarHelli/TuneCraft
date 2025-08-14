@@ -121,7 +121,7 @@ def create_iterable_dataset_generator(json_path, images_base_path="."):
             ]
             
             yield {
-                "conversations": conversation
+                "messages": conversation
             }
             
             processed += 1
@@ -132,10 +132,10 @@ def create_iterable_dataset_generator(json_path, images_base_path="."):
 
 def formatting_prompts_func(examples):
     """Format conversations for training"""
-    conversations = examples["conversations"]
+    messages = examples["messages"]
     texts = []
     
-    for conversation in conversations:
+    for conversation in messages:
         # Format conversation - the tokenizer will handle the image placement
         text = tokenizer.apply_chat_template(
             conversation,
