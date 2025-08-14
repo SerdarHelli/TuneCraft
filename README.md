@@ -17,9 +17,10 @@ The training pipeline uses:
 - ✅ **Custom Reward Function**: Rewards correct answers, reasoning quality, and format
 - ✅ **Memory Efficient**: Uses 4-bit quantization and LoRA for efficient training
 - ✅ **VLM Support**: Handles images and text inputs correctly
-- ✅ **Lazy Image Loading**: Handles 600k+ images without loading all into memory
+- ✅ **HuggingFace Iterable Datasets**: Uses recommended approach for large datasets (600k+ images)
+- ✅ **On-Demand Image Loading**: Images loaded only when needed during training
 - ✅ **16-bit Image Support**: Automatically converts 16-bit medical images to 8-bit RGB
-- ✅ **Smart Caching**: LRU cache for frequently accessed images
+- ✅ **Memory Efficient**: No disk caching needed, generated fresh each time
 
 ## Installation
 
@@ -53,9 +54,9 @@ python run_training.py
 
 ### Step by Step
 
-1. **Prepare datasets**:
+1. **Test dataset creation**:
 ```bash
-python dataset_pre.py
+python create_datasets.py
 ```
 
 2. **Run GRPO training**:
@@ -128,14 +129,15 @@ B - Pneumonia visible in right lower lobe
 - **RAM**: 32GB+ system RAM (with lazy loading, only ~2-4GB used for image cache)
 - **Storage**: 100GB+ free space for model and datasets
 
-### Memory Usage with Lazy Loading:
-- **Without Lazy Loading**: 600k × 512×512×3 = ~450GB RAM (impossible!)
-- **With Lazy Loading**: Only cache size × 0.75MB = ~750MB-2GB RAM ✅
+### Memory Usage with Iterable Datasets:
+- **Without Iterable Datasets**: 600k × 512×512×3 = ~450GB RAM (impossible!)
+- **With Iterable Datasets**: Images loaded on-demand = ~minimal RAM usage ✅
 
-### Cache Size Recommendations:
-- **16GB RAM**: cache_size = 1000 (~750MB for images)
-- **32GB RAM**: cache_size = 2000 (~1.5GB for images)  
-- **64GB RAM**: cache_size = 4000 (~3GB for images)
+### Key Benefits:
+- **No Memory Limits**: Handle datasets of any size (600k, 1M+ images)
+- **No Disk Caching**: Datasets generated fresh each time (saves storage)
+- **Automatic Cleanup**: Images garbage collected after use
+- **Streaming**: Perfect for very large datasets that don't fit on disk
 
 ## Troubleshooting
 

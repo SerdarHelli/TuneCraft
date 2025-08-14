@@ -11,18 +11,25 @@ from config import *
 print("Torch:", torch.__version__)
 print("CUDA available:", torch.cuda.is_available())
 
-# Load the datasets created by dataset_pre.py
-print("Loading datasets...")
-ds_train = load_from_disk(DATASET_SAVE_NAMES["train"])
-ds_val = load_from_disk(DATASET_SAVE_NAMES["val"])
-ds_test = load_from_disk(DATASET_SAVE_NAMES["test"])
+# Create iterable datasets (following HuggingFace best practices)
+print("Creating iterable datasets...")
 
-print(f"Train dataset: {len(ds_train)} samples")
-print(f"Val dataset: {len(ds_val)} samples")
-print(f"Test dataset: {len(ds_test)} samples")
+from create_datasets import create_iterable_dataset
 
-print(f"Sample columns: {ds_train.column_names}")
-print(f"Sample data: {ds_train[0]}")
+# Create datasets using the optimized iterable approach
+ds_train = create_iterable_dataset(TRAIN_JSON)
+ds_val = create_iterable_dataset(VAL_JSON)
+ds_test = create_iterable_dataset(TEST_JSON)
+
+print("✅ Iterable datasets created successfully")
+print("💾 Images will be loaded on-demand during training")
+
+# Test dataset by taking a few samples
+print("Testing dataset...")
+train_sample = next(iter(ds_train))
+print(f"Sample columns: {list(train_sample.keys())}")
+print(f"Sample prompt length: {len(train_sample['prompt'])}")
+print(f"Sample image size: {train_sample['image'].size}")
 
 LETTER_RE = re.compile(r"\b([ABCD])\b", flags=re.IGNORECASE)
 FORMAT_RE = re.compile(r"^\s*([ABCD])\s*[-–:]\s*(.+)$", flags=re.IGNORECASE)

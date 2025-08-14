@@ -29,7 +29,7 @@ TRAINING_CONFIG = {
     "eval_steps": 500,
     "evaluation_strategy": "steps",
     "report_to": "none",
-    "dataloader_num_workers": 4,  # Use multiple workers for lazy loading
+    "dataloader_num_workers": 0,  # Use 0 for iterable datasets to avoid multiprocessing issues
     "gradient_checkpointing": True,
     "warmup_steps": 50,
     "beta": 0.0,  # No KL penalty
@@ -76,12 +76,11 @@ IMAGE_CONFIG = {
     "force_rgb": True,          # Convert all images to RGB
 }
 
-# Lazy loading settings for large datasets
-LAZY_LOADING_CONFIG = {
-    "cache_size": 1000,         # Number of images to keep in memory
-    "use_lazy_loading": True,   # Enable lazy loading for large datasets
-    "prefetch_factor": 2,       # Prefetch factor for DataLoader
-    "num_workers": 4,           # Number of worker processes for data loading
+# Iterable dataset settings (following HuggingFace best practices)
+ITERABLE_DATASET_CONFIG = {
+    "use_iterable_datasets": True,  # Use IterableDataset for large datasets
+    "streaming": True,              # Stream data without caching to disk
+    "on_demand_loading": True,      # Load images only when needed
 }
 
 # Dataset processing
