@@ -74,12 +74,6 @@ IMAGE_CONFIG = {
     "force_rgb": True,          # Convert all images to RGB
 }
 
-# Dataset settings (Using IterableDataset with workaround)
-DATASET_CONFIG = {
-    "use_iterable_datasets": True,   # Using IterableDataset with dispatch_batches=False workaround
-    "streaming": True,               # Stream data without caching to disk
-    "on_demand_loading": True,       # Load images only when needed
-}
 
 # Dataset processing
 DATASET_SAVE_NAMES = {
