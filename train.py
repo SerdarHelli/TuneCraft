@@ -86,6 +86,13 @@ def create_iterable_dataset_generator(json_path, images_base_path="."):
             if not image_path or not os.path.exists(image_path):
                 continue
                 
+            # Load image
+            try:
+                image = Image.open(image_path).convert('RGB')
+            except Exception as e:
+                print(f"Error loading image {image_path}: {e}")
+                continue
+                
             # Create conversation format for SFT
             user_message = item.get('question', '')
             
@@ -99,17 +106,21 @@ def create_iterable_dataset_generator(json_path, images_base_path="."):
             
             conversation = [
                 {
-                    "from": "human",
-                    "value": f"<image>\n{user_message}"
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": user_message},
+                        {"type": "image", "image": image}
+                    ]
                 },
                 {
-                    "from": "gpt", 
-                    "value": assistant_response
+                    "role": "assistant", 
+                    "content": [
+                        {"type": "text", "text": assistant_response}
+                    ]
                 }
             ]
             
             yield {
-                "image": [image_path],
                 "conversations": conversation
             }
             
@@ -121,19 +132,11 @@ def create_iterable_dataset_generator(json_path, images_base_path="."):
 
 def formatting_prompts_func(examples):
     """Format conversations for training"""
-    images = examples["image"]
     conversations = examples["conversations"]
     texts = []
     
-    for image_path, conversation in zip(images, conversations):
-        # Load image
-        try:
-            image = Image.open(image_path).convert('RGB')
-        except Exception as e:
-            print(f"Error loading image {image_path}: {e}")
-            continue
-            
-        # Format conversation
+    for conversation in conversations:
+        # Format conversation - the tokenizer will handle the image placement
         text = tokenizer.apply_chat_template(
             conversation,
             tokenize=False,
@@ -141,10 +144,7 @@ def formatting_prompts_func(examples):
         )
         texts.append(text)
     
-    return {
-        "text": texts,
-        "image": [Image.open(img).convert('RGB') for img in images]
-    }
+    return {"text": texts}
 
 # Create iterable datasets
 print("Creating iterable training dataset...")
@@ -189,7 +189,6 @@ trainer = SFTTrainer(
     tokenizer=tokenizer,
     train_dataset=train_dataset,
     eval_dataset=val_dataset,
-    dataset_text_field="text",
     formatting_func=formatting_prompts_func,
     max_seq_length=TRAINING_CONFIG["max_seq_length"],
     dataset_num_proc=2,
