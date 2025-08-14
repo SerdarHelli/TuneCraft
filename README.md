@@ -36,15 +36,13 @@ VAL_JSON   = "/path/to/your/valid_vqa_data.json"
 TEST_JSON  = "/path/to/your/test_vqa_data.json"
 ```
 
-3. Configure lazy loading for your system:
-```python
-# In config.py, adjust cache size based on your RAM
-LAZY_LOADING_CONFIG = {
-    "cache_size": 1000,  # Adjust based on available RAM
-    "use_lazy_loading": True,
-    "num_workers": 4,    # Parallel image loading
-}
+3. Optimize cache size for your system:
+```bash
+python optimize_cache.py
 ```
+This will analyze your system and recommend optimal cache settings.
+
+4. Update the recommended settings in `config.py`
 
 ## Usage
 
