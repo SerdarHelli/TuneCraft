@@ -58,14 +58,26 @@ def create_iterable_dataset_generator(json_path, images_base_path="data/images")
             # Get image path - handle different JSON structures
             image_path = None
             if 'image_path' in item:
-                image_path = os.path.join(images_base_path, item['image_path'])
+                raw_path = item['image_path']
+                # Handle relative paths that start with ../
+                if raw_path.startswith('../'):
+                    # Convert ../path to absolute path from project root
+                    image_path = os.path.normpath(os.path.join(os.getcwd(), raw_path))
+                else:
+                    image_path = os.path.join(images_base_path, raw_path)
             elif 'ImagePath' in item and item['ImagePath']:
                 # Handle list of image paths
                 image_paths = item['ImagePath']
                 if isinstance(image_paths, list) and image_paths:
-                    image_path = image_paths[0]  # Use first image
+                    raw_path = image_paths[0]  # Use first image
                 else:
-                    image_path = image_paths
+                    raw_path = image_paths
+                
+                # Handle relative paths that start with ../
+                if raw_path.startswith('../'):
+                    image_path = os.path.normpath(os.path.join(os.getcwd(), raw_path))
+                else:
+                    image_path = raw_path
             
             # Skip if no image path or image doesn't exist
             if not image_path or not os.path.exists(image_path):
