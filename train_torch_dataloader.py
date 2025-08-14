@@ -237,6 +237,7 @@ training_args = GRPOConfig(
 )
 
 print("Creating GRPO trainer...")
+training_args.steps_per_generation = None
 
 # Create trainer with PyTorch DataLoader
 trainer = GRPOTrainer(
