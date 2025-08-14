@@ -19,7 +19,7 @@ TRAINING_CONFIG = {
     "learning_rate": 5e-6,
     "num_train_epochs": 1,
     "num_generations": 4,  # Number of completions generated per prompt
-    "generation_batch_size": 4,  # Must be divisible by num_generations (4)
+    "steps_per_generation": 1,  # Generate every 1 step (instead of generation_batch_size)
     "max_prompt_length": None,  # Don't truncate prompts (important for VLM)
     "max_completion_length": 128,
     "bf16": True,
