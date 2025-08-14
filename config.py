@@ -8,7 +8,7 @@ VAL_JSON = "/home/QA_json/valid_vqa_data.json"
 TEST_JSON = "/home/QA_json/test_vqa_data.json"
 
 # Model configuration
-MODEL_ID = "google/medgemma-4b-it"
+MODEL_ID = "google/medgemma-4b-it"  # Medical vision-language model
 USE_ONLY_FIRST_IMAGE = False  # Set to True to use only the first image per sample
 
 # Training configuration

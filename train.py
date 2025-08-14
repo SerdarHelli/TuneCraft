@@ -3,7 +3,7 @@ import re
 import torch
 from typing import List, Dict, Any
 from datasets import load_from_disk
-from transformers import AutoProcessor, AutoModelForVision2Seq, BitsAndBytesConfig
+from transformers import AutoProcessor, AutoModelForImageTextToText, BitsAndBytesConfig
 from peft import LoraConfig, get_peft_model
 from trl import GRPOConfig, GRPOTrainer
 from config import *
@@ -143,8 +143,8 @@ quant_config = BitsAndBytesConfig(
     bnb_4bit_compute_dtype=getattr(torch, QUANTIZATION_CONFIG["bnb_4bit_compute_dtype"])
 )
 
-# Load model - use AutoModelForVision2Seq for VLM
-model = AutoModelForVision2Seq.from_pretrained(
+# Load model - use AutoModelForImageTextToText for MedGemma VLM
+model = AutoModelForImageTextToText.from_pretrained(
     MODEL_ID, 
     torch_dtype=torch.bfloat16, 
     quantization_config=quant_config, 
