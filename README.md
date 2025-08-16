@@ -17,7 +17,9 @@ Whether you’re experimenting with LLMs, vision models, or multimodal architect
   A *very lightweight* supervised fine-tuning (SFT) example on **MedGemma-4B-IT**.  
   Perfect for quick experiments, small-scale training, or learning the basics of finetuning with medical-oriented LLMs.  
 
-*More notebooks coming soon...* 🚧  
+
+
+     **More notebooks coming soon...** 🚧  
 ---
 
 ## 🛠️ Tech Stack
