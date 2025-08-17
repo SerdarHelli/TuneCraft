@@ -22,15 +22,6 @@ Whether you’re experimenting with LLMs, vision models, or multimodal architect
      **More notebooks coming soon...** 🚧  
 ---
 
-## 🛠️ Tech Stack
-
-- 🤗 Hugging Face Transformers
-
-- Unsloth (super fast finetuning)
-
-- vLLM (efficient inference)
-
-- PyTorch / CUDA magic 🔥
 
 ## 🎤 Contribute
 
