@@ -10,7 +10,7 @@
   A *very lightweight* supervised fine-tuning (SFT) example on **MedGemma-4B-IT**.  
   Perfect for quick experiments, small-scale training, or learning the basics of finetuning with medical-oriented LLMs.  
 
-- **[gemma3-270m-dpo-safety.ipynb](https://github.com/SerdarHelli/TuneCraft/blob/main/notebooks/gemma3-270m-dpo-safety.ipynb)**  
+- **[gemma3-270m-dpo-safety.ipynb](https://github.com/SerdarHelli/TuneCraft/blob/main/notebooks/gemma-3-270m-it-_anthropic_hh-rlhf_dpo_lite_safety.ipynb)**  
   Direct Preference Optimization (DPO) fine-tuning example on **Gemma3-270M** for safety alignment.  
   Demonstrates how to train models to avoid harmful and sensitive responses using preference-based learning.  
 
